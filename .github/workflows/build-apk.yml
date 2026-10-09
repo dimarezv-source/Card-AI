@@ -22,6 +22,8 @@ jobs:
           # Android API 37 is not available in the current SDK repository.
           # Compile the prototype against the currently available Android 36 SDK.
           find checkpoint/CardAI_1_4/android -name '*.gradle.kts' -type f -print0 | xargs -0 sed -i -E 's/(compileSdk|targetSdk)[[:space:]]*=[[:space:]]*37/\1 = 36/g'
+          # AGP 9 has built-in Kotlin; remove the legacy Android Kotlin plugin from the app module.
+          sed -i -E '/org\.jetbrains\.kotlin\.android|libs\.plugins\.kotlin\.android|kotlin\("android"\)/d' checkpoint/CardAI_1_4/android/app/build.gradle.kts
 
       - name: Set up Java
         uses: actions/setup-java@v4
