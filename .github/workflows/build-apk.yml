@@ -19,6 +19,9 @@ jobs:
         run: |
           unzip -o CardAI_1_4_4_checkpoint.zip -d checkpoint
           test -f checkpoint/CardAI_1_4/android/settings.gradle.kts
+          # Android API 37 is not available in the current SDK repository.
+          # Compile the prototype against the currently available Android 36 SDK.
+          find checkpoint/CardAI_1_4/android -name '*.gradle.kts' -type f -print0 | xargs -0 sed -i -E 's/(compileSdk|targetSdk)[[:space:]]*=[[:space:]]*37/\1 = 36/g'
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -32,7 +35,7 @@ jobs:
           packages: platform-tools
 
       - name: Install Android SDK packages
-        run: sdkmanager "platforms;android-37" "build-tools;37.0.0" "platform-tools"
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
