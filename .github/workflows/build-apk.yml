@@ -19,7 +19,7 @@ jobs:
         run: |
           unzip -o CardAI_1_4_4_checkpoint.zip -d checkpoint
           test -f checkpoint/CardAI_1_4/android/settings.gradle.kts
-          # Keep compileSdk at API 37: Compose 1.12.x requires API 37 and AGP 9.1.1+.
+          # Use the published Android API 36 packages available to sdkmanager.
           # AGP 9 has built-in Kotlin; remove the legacy Android Kotlin plugin from the app module.
           sed -i -E '/org\.jetbrains\.kotlin\.android|libs\.plugins\.kotlin\.android|kotlin\("android"\)/d' checkpoint/CardAI_1_4/android/app/build.gradle.kts
 
@@ -35,7 +35,7 @@ jobs:
           packages: platform-tools
 
       - name: Install Android SDK packages
-        run: sdkmanager "platforms;android-37" "build-tools;37.0.0" "platform-tools"
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
