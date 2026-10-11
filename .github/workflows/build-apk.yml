@@ -29,7 +29,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CardAI-source-debug
-          path: checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt
+          path: checkpoint/CardAI_1_4/android/app/src/main
           if-no-files-found: error
           retention-days: 7
 
