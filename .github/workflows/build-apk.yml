@@ -22,6 +22,9 @@ jobs:
           # Use the published Android API 36 packages available to sdkmanager.
           # AGP 9 has built-in Kotlin; remove the legacy Android Kotlin plugin from the app module.
           sed -i -E '/org\.jetbrains\.kotlin\.android|libs\.plugins\.kotlin\.android|kotlin\("android"\)/d' checkpoint/CardAI_1_4/android/app/build.gradle.kts
+          # Fix unsupported ContentScale member reported by the previous compiler run.
+          sed -i 's/ContentScale\.ImageOnly/ContentScale.Crop/g' checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt
+          nl -ba checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt | sed -n '115,130p'
 
       - name: Set up Java
         uses: actions/setup-java@v4
