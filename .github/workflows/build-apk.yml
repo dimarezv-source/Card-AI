@@ -24,6 +24,8 @@ jobs:
           # Fully qualify the media picker type to avoid a missing import.
           sed -i 's/PickMultipleVisualMedia\.ImageOnly/androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly/g; s/PickVisualMedia\.ImageOnly/androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly/g; s#androidx\.activity\.result\.contract\.ActivityResultContracts\.androidx\.activity\.result\.contract\.ActivityResultContracts\.PickVisualMedia#androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia#g; s/, Modifier\.fillMaxWidth())/, modifier = Modifier.fillMaxWidth())/g' checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt
           nl -ba checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt | sed -n '115,130p'
+          # Show the actual first upload error instead of hiding it behind a generic message.
+          sed -i 's/message = "Не удалось загрузить фотографии"/message = "Не удалось загрузить фотографии: ${uploadResults.firstOrNull { !it.ok }?.message ?: \\\"неизвестная ошибка\\\"}"/' checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt
 
       - name: Upload extracted source for debugging
         uses: actions/upload-artifact@v4
