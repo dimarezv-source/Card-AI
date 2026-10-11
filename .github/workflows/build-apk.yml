@@ -22,7 +22,7 @@ jobs:
           # AGP 9 includes Kotlin support; remove the legacy Android Kotlin plugin.
           sed -i -E '/org\.jetbrains\.kotlin\.android|libs\.plugins\.kotlin\.android|kotlin\("android"\)/d' checkpoint/CardAI_1_4/android/app/build.gradle.kts
           # Fully qualify the media picker type to avoid a missing import.
-          sed -i 's/PickMultipleVisualMedia\.ImageOnly/androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly/g; s/PickVisualMedia\.ImageOnly/androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly/g; s/, Modifier\.fillMaxWidth())/, modifier = Modifier.fillMaxWidth())/g' checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt
+          sed -i 's/PickMultipleVisualMedia\.ImageOnly/androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly/g; s/PickVisualMedia\.ImageOnly/androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly/g; s#androidx\.activity\.result\.contract\.ActivityResultContracts\.androidx\.activity\.result\.contract\.ActivityResultContracts\.PickVisualMedia#androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia#g; s/, Modifier\.fillMaxWidth())/, modifier = Modifier.fillMaxWidth())/g' checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt
           nl -ba checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt | sed -n '115,130p'
 
       - name: Set up Java
