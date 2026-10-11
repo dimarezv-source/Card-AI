@@ -25,6 +25,14 @@ jobs:
           sed -i 's/PickMultipleVisualMedia\.ImageOnly/androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly/g; s/PickVisualMedia\.ImageOnly/androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly/g; s#androidx\.activity\.result\.contract\.ActivityResultContracts\.androidx\.activity\.result\.contract\.ActivityResultContracts\.PickVisualMedia#androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia#g; s/, Modifier\.fillMaxWidth())/, modifier = Modifier.fillMaxWidth())/g' checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt
           nl -ba checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt | sed -n '115,130p'
           # Show the actual first upload error instead of hiding it behind a generic message.
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt")
+          s = p.read_text()
+          s = s.replace('if (uploaded == 0) { message = "Не удалось загрузить фотографии"; busy = false; return@launch }',
+                        'if (uploaded == 0) { message = uploadResults.firstOrNull()?.message ?: "Не удалось загрузить фотографии"; busy = false; return@launch }')
+          p.write_text(s)
+          PY
 
       - name: Upload extracted source for debugging
         uses: actions/upload-artifact@v4
