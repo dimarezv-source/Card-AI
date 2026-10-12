@@ -20,15 +20,23 @@ jobs:
           unzip -o CardAI_1_4_4_checkpoint.zip -d checkpoint
           test -f checkpoint/CardAI_1_4/android/settings.gradle.kts
           # AGP 9 includes Kotlin support; remove the legacy Android Kotlin plugin.
-          sed -i -E '/org\.jetbrains\.kotlin\.android|libs\.plugins\.kotlin\.android|kotlin\("android"\)/d' checkpoint/CardAI_1_4/android/app/build.gradle.kts
+          sed -i -E '/org\\.jetbrains\\.kotlin\\.android|libs\\.plugins\\.kotlin\\.android|kotlin\\("android"\\)/d' checkpoint/CardAI_1_4/android/app/build.gradle.kts
           # Fully qualify the media picker type to avoid a missing import.
-          sed -i 's/PickMultipleVisualMedia\.ImageOnly/androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly/g; s/PickVisualMedia\.ImageOnly/androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly/g; s#androidx\.activity\.result\.contract\.ActivityResultContracts\.androidx\.activity\.result\.contract\.ActivityResultContracts\.PickVisualMedia#androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia#g; s/, Modifier\.fillMaxWidth())/, modifier = Modifier.fillMaxWidth())/g' checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt
-          nl -ba checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt | sed -n '115,130p'
-          # Print API endpoint configuration from the packaged checkpoint for diagnosis.
+          sed -i 's/PickMultipleVisualMedia\\.ImageOnly/androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly/g; s/PickVisualMedia\\.ImageOnly/androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly/g; s#androidx\\.activity\\.result\\.contract\\.ActivityResultContracts\\.androidx\\.activity\\.result\\.contract\\.ActivityResultContracts\\.PickVisualMedia#androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia#g; s/, Modifier\\.fillMaxWidth())/, modifier = Modifier.fillMaxWidth())/g' checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt
+          # Point the phone build at the deployed Render backend, not the emulator loopback.
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("checkpoint/CardAI_1_4/android/app/build.gradle.kts")
+          s = p.read_text()
+          old = "http://10.0.2.2:8000"
+          new = "https://card-ai-y2qx.onrender.com"
+          if old not in s:
+              raise SystemExit("Expected emulator API URL was not found in build.gradle.kts; refusing to build an unpatched APK.")
+          p.write_text(s.replace(old, new))
+          print("Configured API URL:", new)
+          PY
           echo "=== API endpoint configuration ==="
           grep -R -n -E 'CARDAI_API_BASE_URL|baseUrl|BASE_URL|https?://' checkpoint/CardAI_1_4/android --include='*.gradle' --include='*.gradle.kts' --include='*.properties' --include='*.kt' || true
-          echo "=== Backend-related files ==="
-          find checkpoint/CardAI_1_4 -maxdepth 4 -type f \( -iname '*server*' -o -iname '*backend*' -o -iname '*api*' -o -iname 'render.yaml' -o -iname 'Dockerfile' \) -print
           # Show the actual first upload error instead of hiding it behind a generic message.
           python3 - <<'PY'
           from pathlib import Path
