@@ -25,7 +25,7 @@ jobs:
           root = Path("checkpoint/CardAI_1_4/android")
           gradle_file = root / "app/build.gradle.kts"
           s = gradle_file.read_text()
-          s2 = re.sub(r"(?m)^.*(?:org\\.jetbrains\\.kotlin\\.android|libs\\.plugins\\.kotlin\\.android|kotlin\\(\\"android\\"\\)).*\\n", "", s)
+          s2 = "".join(line for line in s.splitlines(True) if not any(token in line for token in ("org.jetbrains.kotlin.android", "libs.plugins.kotlin.android", 'kotlin("android")')))
           if s2 == s and ("org.jetbrains.kotlin.android" in s or "libs.plugins.kotlin.android" in s):
               raise SystemExit("Kotlin Android plugin still present; refusing to build.")
           gradle_file.write_text(s2)
