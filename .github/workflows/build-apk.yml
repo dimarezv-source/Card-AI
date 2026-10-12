@@ -24,6 +24,11 @@ jobs:
           # Fully qualify the media picker type to avoid a missing import.
           sed -i 's/PickMultipleVisualMedia\.ImageOnly/androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly/g; s/PickVisualMedia\.ImageOnly/androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly/g; s#androidx\.activity\.result\.contract\.ActivityResultContracts\.androidx\.activity\.result\.contract\.ActivityResultContracts\.PickVisualMedia#androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia#g; s/, Modifier\.fillMaxWidth())/, modifier = Modifier.fillMaxWidth())/g' checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt
           nl -ba checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt | sed -n '115,130p'
+          # Print API endpoint configuration from the packaged checkpoint for diagnosis.
+          echo "=== API endpoint configuration ==="
+          grep -R -n -E 'CARDAI_API_BASE_URL|baseUrl|BASE_URL|https?://' checkpoint/CardAI_1_4/android --include='*.gradle' --include='*.gradle.kts' --include='*.properties' --include='*.kt' || true
+          echo "=== Backend-related files ==="
+          find checkpoint/CardAI_1_4 -maxdepth 4 -type f \( -iname '*server*' -o -iname '*backend*' -o -iname '*api*' -o -iname 'render.yaml' -o -iname 'Dockerfile' \) -print
           # Show the actual first upload error instead of hiding it behind a generic message.
           python3 - <<'PY'
           from pathlib import Path
