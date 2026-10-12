@@ -19,33 +19,36 @@ jobs:
         run: |
           unzip -o CardAI_1_4_4_checkpoint.zip -d checkpoint
           test -f checkpoint/CardAI_1_4/android/settings.gradle.kts
-          # AGP 9 includes Kotlin support; remove the legacy Android Kotlin plugin.
-          sed -i -E '/org\\.jetbrains\\.kotlin\\.android|libs\\.plugins\\.kotlin\\.android|kotlin\\("android"\\)/d' checkpoint/CardAI_1_4/android/app/build.gradle.kts
-          # Fully qualify the media picker type to avoid a missing import.
-          sed -i 's/PickMultipleVisualMedia\\.ImageOnly/androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly/g; s/PickVisualMedia\\.ImageOnly/androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly/g; s#androidx\\.activity\\.result\\.contract\\.ActivityResultContracts\\.androidx\\.activity\\.result\\.contract\\.ActivityResultContracts\\.PickVisualMedia#androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia#g; s/, Modifier\\.fillMaxWidth())/, modifier = Modifier.fillMaxWidth())/g' checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt
-          # Point the phone build at the deployed Render backend, not the emulator loopback.
           python3 - <<'PY'
           from pathlib import Path
-          p = Path("checkpoint/CardAI_1_4/android/app/build.gradle.kts")
-          s = p.read_text()
-          old = "http://10.0.2.2:8000"
-          new = "https://card-ai-y2qx.onrender.com"
+          import re
+          root = Path("checkpoint/CardAI_1_4/android")
+          gradle_file = root / "app/build.gradle.kts"
+          s = gradle_file.read_text()
+          s2 = re.sub(r"(?m)^.*(?:org\\.jetbrains\\.kotlin\\.android|libs\\.plugins\\.kotlin\\.android|kotlin\\(\\"android\\"\\)).*\\n", "", s)
+          if s2 == s and ("org.jetbrains.kotlin.android" in s or "libs.plugins.kotlin.android" in s):
+              raise SystemExit("Kotlin Android plugin still present; refusing to build.")
+          gradle_file.write_text(s2)
+          main = root / "app/src/main/java/com/cardai/app/MainActivity.kt"
+          t = main.read_text()
+          t = t.replace("PickMultipleVisualMedia.ImageOnly", "androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly")
+          t = t.replace("PickVisualMedia.ImageOnly", "androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly")
+          t = t.replace("androidx.activity.result.contract.ActivityResultContracts.androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia", "androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia")
+          t = t.replace(", Modifier.fillMaxWidth())", ", modifier = Modifier.fillMaxWidth())")
+          t = t.replace('if (uploaded == 0) { message = "Не удалось загрузить фотографии"; busy = false; return@launch }',
+                        'if (uploaded == 0) { message = uploadResults.firstOrNull()?.message ?: "Не удалось загрузить фотографии"; busy = false; return@launch }')
+          main.write_text(t)
+          # Ensure the APK for a physical phone uses the public Render URL.
+          s = gradle_file.read_text()
+          old, new = "http://10.0.2.2:8000", "https://card-ai-y2qx.onrender.com"
           if old not in s:
-              raise SystemExit("Expected emulator API URL was not found in build.gradle.kts; refusing to build an unpatched APK.")
-          p.write_text(s.replace(old, new))
+              raise SystemExit("Expected emulator API URL was not found; refusing to build an unpatched APK.")
+          gradle_file.write_text(s.replace(old, new))
           print("Configured API URL:", new)
+          print("Kotlin Android plugin removal verified.")
           PY
           echo "=== API endpoint configuration ==="
           grep -R -n -E 'CARDAI_API_BASE_URL|baseUrl|BASE_URL|https?://' checkpoint/CardAI_1_4/android --include='*.gradle' --include='*.gradle.kts' --include='*.properties' --include='*.kt' || true
-          # Show the actual first upload error instead of hiding it behind a generic message.
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path("checkpoint/CardAI_1_4/android/app/src/main/java/com/cardai/app/MainActivity.kt")
-          s = p.read_text()
-          s = s.replace('if (uploaded == 0) { message = "Не удалось загрузить фотографии"; busy = false; return@launch }',
-                        'if (uploaded == 0) { message = uploadResults.firstOrNull()?.message ?: "Не удалось загрузить фотографии"; busy = false; return@launch }')
-          p.write_text(s)
-          PY
 
       - name: Upload extracted source for debugging
         uses: actions/upload-artifact@v4
