@@ -37,7 +37,50 @@ jobs:
           t = t.replace(", Modifier.fillMaxWidth())", ", modifier = Modifier.fillMaxWidth())")
           t = t.replace('if (uploaded == 0) { message = "Не удалось загрузить фотографии"; busy = false; return@launch }',
                         'if (uploaded == 0) { message = uploadResults.firstOrNull()?.message ?: "Не удалось загрузить фотографии"; busy = false; return@launch }')
+          # Parse the current backend's /analyze response directly; do not call the
+          # legacy /listing-draft endpoint, which the current backend does not provide.
+          t = t.replace('            val draftResult = CardAiApi.listingDraft(projectId)\n            draft = draftResult.second\n',
+                        '            draft = CardAiApi.listingFromAnalysis(analysis)\n')
+          t = t.replace('analysis.ok && analysisStatus == "ready_for_review" && draftResult.first.ok',
+                        'analysis.ok && analysisStatus == "completed"')
           main.write_text(t)
+          api = root / "app/src/main/java/com/cardai/app/CardAiApi.kt"
+          a = api.read_text()
+          marker = '    suspend fun listingDraft(projectId: String): Pair<ApiResult, ListingDraft> = withContext(Dispatchers.IO) {'
+          method = """    fun listingFromAnalysis(result: ApiResult): ListingDraft {
+        val draft = result.body?.optJSONObject("draft") ?: org.json.JSONObject()
+        val chars = mutableMapOf<String, String>()
+        listOf("category", "condition", "price_min", "price_max", "price_reasoning").forEach { key ->
+            val value = draft.optString(key).takeIf { it.isNotBlank() && it != "null" }
+            if (value != null) chars[key] = value
+        }
+        val confirmation = mutableListOf<String>()
+        listOf("missing_info", "photo_tips").forEach { key ->
+            val array = draft.optJSONArray(key)
+            if (array != null) for (i in 0 until array.length()) {
+                val item = array.optString(i).trim()
+                if (item.isNotEmpty()) confirmation += item
+            }
+        }
+        val items = draft.optJSONArray("detected_items")
+        if (items != null) for (i in 0 until items.length()) {
+            val item = items.optString(i).trim()
+            if (item.isNotEmpty()) chars["Предмет ${i + 1}"] = item
+        }
+        return ListingDraft(
+            title = draft.optString("title").takeIf { it != "null" } ?: "",
+            description = draft.optString("description").takeIf { it != "null" } ?: "",
+            characteristics = chars,
+            needsConfirmation = confirmation,
+            needsReview = true
+        )
+    }
+
+"""
+          if marker not in a:
+              raise SystemExit("Could not find API insertion point")
+          a = a.replace(marker, method + marker)
+          api.write_text(a)
           # Ensure the APK for a physical phone uses the public Render URL.
           s = gradle_file.read_text()
           old, new = "http://10.0.2.2:8000", "https://card-ai-y2qx.onrender.com"
