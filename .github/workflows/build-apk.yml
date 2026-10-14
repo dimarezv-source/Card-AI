@@ -102,6 +102,15 @@ jobs:
           gradle_file.write_text(s.replace(old, new))
           print("Configured API URL:", new)
           print("Kotlin Android plugin removal verified.")
+          # Emit only the analysis flow and user-facing failure branch to aid diagnosis.
+          lines = main.read_text().splitlines()
+          needles = ("Фото загружены", "analysisStatus", "listingFromAnalysis", "analyzeProject", "CardAiApi.analyze", "analysis.ok")
+          for i, line in enumerate(lines):
+              if any(token in line for token in needles):
+                  lo, hi = max(0, i - 3), min(len(lines), i + 5)
+                  print(f"=== MainActivity.kt lines {lo + 1}-{hi} ===")
+                  for n in range(lo, hi):
+                      print(f"{n + 1}: {lines[n]}")
           PY
           echo "=== API endpoint configuration ==="
           grep -R -n -E 'CARDAI_API_BASE_URL|baseUrl|BASE_URL|https?://' checkpoint/CardAI_1_4/android --include='*.gradle' --include='*.gradle.kts' --include='*.properties' --include='*.kt' || true
