@@ -43,6 +43,13 @@ jobs:
                         '            draft = CardAiApi.listingFromAnalysis(analysis)\n')
           t = t.replace('analysis.ok && analysisStatus == "ready_for_review" && draftResult.first.ok',
                         'analysis.ok && analysisStatus == "completed"')
+          # Fail fast if critical patches did not apply; a successful compile alone is not enough.
+          if 'draft = CardAiApi.listingFromAnalysis(analysis)' not in t:
+              raise SystemExit("Analysis-response patch did not apply to MainActivity.kt")
+          if 'draftResult.first.ok' in t:
+              raise SystemExit("Legacy listing-draft success condition remains in MainActivity.kt")
+          if 'val draftResult = CardAiApi.listingDraft(projectId)' in t:
+              raise SystemExit("Legacy listing-draft request remains in MainActivity.kt")
           main.write_text(t)
           api = root / "app/src/main/java/com/cardai/app/CardAiApi.kt"
           a = api.read_text()
@@ -83,6 +90,10 @@ jobs:
               raise SystemExit("Could not find API insertion point")
           a = a.replace(marker, method + marker)
           api.write_text(a)
+          # Verify the method exists exactly once in the source that will be compiled.
+          compiled_api = api.read_text()
+          if compiled_api.count("fun listingFromAnalysis(result: ApiResult): ListingDraft") != 1:
+              raise SystemExit("Expected exactly one listingFromAnalysis implementation")
           # Ensure the APK for a physical phone uses the public Render URL.
           s = gradle_file.read_text()
           old, new = "http://10.0.2.2:8000", "https://card-ai-y2qx.onrender.com"
