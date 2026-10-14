@@ -50,9 +50,27 @@ jobs:
               raise SystemExit("Legacy listing-draft success condition remains in MainActivity.kt")
           if 'val draftResult = CardAiApi.listingDraft(projectId)' in t:
               raise SystemExit("Legacy listing-draft request remains in MainActivity.kt")
+          # Preserve useful API/network errors in the UI instead of hiding them behind a generic message.
+          old_error = '''                else -> analysis.body?.optString("message")?.takeIf { it.isNotBlank() }
+                    ?: "Фото загружены, но анализ пока не завершён"'''
+          new_error = '''                else -> analysis.body?.optString("message")?.takeIf { it.isNotBlank() && it != "null" }
+                    ?: analysis.body?.optString("detail")?.takeIf { it.isNotBlank() && it != "null" }
+                    ?: analysis.message.takeIf { !analysis.ok && it.isNotBlank() }
+                    ?: "Фото загружены, но анализ пока не завершён"'''
+          if old_error not in t:
+              raise SystemExit("Could not locate analysis error message branch")
+          t = t.replace(old_error, new_error, 1)
           main.write_text(t)
           api = root / "app/src/main/java/com/cardai/app/CardAiApi.kt"
           a = api.read_text()
+          if "private const val READ_TIMEOUT = 30_000" not in a:
+              raise SystemExit("Expected API read timeout declaration was not found")
+          a = a.replace("private const val READ_TIMEOUT = 30_000", "private const val READ_TIMEOUT = 120_000", 1)
+          old_catch = '.getOrElse { ApiResult(false, "Не удалось запустить анализ") }'
+          new_catch = '.getOrElse { ApiResult(false, "Не удалось запустить анализ: ${it.message ?: it::class.java.simpleName}") }'
+          if old_catch not in a:
+              raise SystemExit("Could not locate analyze() exception handler")
+          a = a.replace(old_catch, new_catch, 1)
           marker = '    suspend fun listingDraft(projectId: String): Pair<ApiResult, ListingDraft> = withContext(Dispatchers.IO) {'
           import textwrap
           method = textwrap.dedent("""\
