@@ -51,12 +51,10 @@ jobs:
           if 'val draftResult = CardAiApi.listingDraft(projectId)' in t:
               raise SystemExit("Legacy listing-draft request remains in MainActivity.kt")
           # Preserve useful API/network errors in the UI instead of hiding them behind a generic message.
-          old_error = '''                else -> analysis.body?.optString("message")?.takeIf { it.isNotBlank() }
-                    ?: "Фото загружены, но анализ пока не завершён"'''
-          new_error = '''                else -> analysis.body?.optString("message")?.takeIf { it.isNotBlank() && it != "null" }
+          old_error = 'else -> analysis.body?.optString("message")?.takeIf { it.isNotBlank() }'
+          new_error = '''else -> analysis.body?.optString("message")?.takeIf { it.isNotBlank() && it != "null" }
                     ?: analysis.body?.optString("detail")?.takeIf { it.isNotBlank() && it != "null" }
-                    ?: analysis.message.takeIf { !analysis.ok && it.isNotBlank() }
-                    ?: "Фото загружены, но анализ пока не завершён"'''
+                    ?: analysis.message.takeIf { !analysis.ok && it.isNotBlank() }'''
           if old_error not in t:
               raise SystemExit("Could not locate analysis error message branch")
           t = t.replace(old_error, new_error, 1)
