@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import base64
+import json
+import logging
 import os
 import uuid
 from pathlib import Path
@@ -9,7 +11,9 @@ from typing import Any
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from openai import OpenAI, APIError, APITimeoutError
+from openai import OpenAI, APIError, APIStatusError, APIConnectionError, APITimeoutError
+
+logger = logging.getLogger("cardai.api")
 
 APP_NAME = "CardAI API"
 DATA_DIR = Path(os.getenv("CARDAI_DATA_DIR", "/tmp/cardai-uploads"))
@@ -143,15 +147,43 @@ async def analyze_project(project_id: str) -> dict[str, Any]:
             max_tokens=1400,
         )
         raw = response.choices[0].message.content or "{}"
-        import json
         draft = json.loads(raw)
         if not isinstance(draft, dict):
             raise ValueError("Model returned non-object JSON")
     except APITimeoutError:
+        logger.warning("OpenAI timeout during photo analysis; model=%s photos=%s", MODEL, len(selected))
         raise HTTPException(status_code=504, detail="Анализ занял слишком много времени. Попробуйте ещё раз.")
-    except APIError:
+    except APIStatusError as exc:
+        # Log structured diagnostics only; never log API keys, image data, or the full request.
+        err = getattr(exc, "body", None)
+        if isinstance(err, dict):
+            err = err.get("error", err)
+        code = err.get("code") if isinstance(err, dict) else None
+        error_type = err.get("type") if isinstance(err, dict) else None
+        logger.error("OpenAI status error: status=%s code=%s type=%s request_id=%s model=%s",
+                     exc.status_code, code, error_type, getattr(exc, "request_id", None), MODEL)
+        if exc.status_code == 401:
+            detail = "Ошибка авторизации OpenAI. Проверьте OPENAI_API_KEY в Render."
+        elif exc.status_code == 429:
+            detail = "Лимит или квота OpenAI исчерпаны. Проверьте Billing и Limits в OpenAI."
+        elif exc.status_code == 403:
+            detail = "У проекта OpenAI нет доступа к этой модели или запросу."
+        elif exc.status_code == 404:
+            detail = "Модель OpenAI не найдена или недоступна для проекта."
+        elif exc.status_code >= 500:
+            detail = "OpenAI временно недоступен. Попробуйте позже."
+        else:
+            detail = "OpenAI отклонил запрос. Подробности доступны в журнале сервера."
+        raise HTTPException(status_code=502, detail=detail)
+    except APIConnectionError as exc:
+        cause = type(exc.__cause__).__name__ if exc.__cause__ else "unknown"
+        logger.error("OpenAI connection error: cause=%s model=%s", cause, MODEL)
+        raise HTTPException(status_code=502, detail="Сервер не смог подключиться к OpenAI. Проверьте сеть и повторите попытку.")
+    except APIError as exc:
+        logger.error("OpenAI API error: type=%s model=%s", type(exc).__name__, MODEL)
         raise HTTPException(status_code=502, detail="Сервис AI временно недоступен. Попробуйте позже.")
     except (ValueError, TypeError):
+        logger.exception("Could not parse OpenAI response as JSON; model=%s", MODEL)
         raise HTTPException(status_code=502, detail="Не удалось разобрать ответ AI. Попробуйте ещё раз.")
 
     return {
