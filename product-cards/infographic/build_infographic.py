@@ -42,7 +42,7 @@ def load_product():
         except Exception: pass
     return out
 def fetch(url,name):
-    asset_dir=OUT/"assets"
+    asset_dir=Path("/tmp/card-ai-assets")
     asset_dir.mkdir(parents=True,exist_ok=True)
     p=asset_dir/name
     try:
