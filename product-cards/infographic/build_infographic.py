@@ -141,20 +141,21 @@ for x,label in [(180,"МАЙОНЕЗ"),(790,"КЕТЧУП")]:
     rr(d,(x,1430,x+520,1555),28,WHITE,outline=LINE,width=3)
     d.text((x+40,1466),label,font=f(31,True),fill=ORANGE)
 save(im,5)
-# 6 — real product detail crops, no synthetic alternate product views.
-im=Image.new("RGBA",(W,H),WHITE); d=header(im,"БЛИЖЕ К ДЕТАЛЯМ","КОНСТРУКЦИЯ\nВ КРУПНОМ ПЛАНЕ","Показываем форму и рабочие элементы реального изделия",6)
+# 6 — real product detail crops, arranged for stronger visual hierarchy.
+im=Image.new("RGBA",(W,H),WHITE); d=header(im,"БЛИЖЕ К ДЕТАЛЯМ","КОНСТРУКЦИЯ\nВ КРУПНОМ ПЛАНЕ","Реальная форма и рабочие элементы изделия",6)
 rgb=hero.convert("RGB")
-details=[
-    ("ОБЩИЙ ВИД",rgb.crop((35,55,1500,410))),
+shadow(im,(70,500,1430,990),34,PALE)
+contain(im,rgb,(110,545,1280,390))
+detail_items=[
     ("ПРОДОЛЬНЫЙ ПАЗ",rgb.crop((330,125,1270,330))),
     ("ОТВЕРСТИЯ И КРАЯ",rgb.crop((1120,35,1530,420)))
 ]
-for i,(label,part) in enumerate(details):
-    x=70+i*480
-    shadow(im,(x,510,x+440,1510),30,PALE)
-    contain(im,part,(x+18,650,404,560))
-    d.text((x+28,1370),label,font=f(22,True),fill=DARK)
-footer_tag(d,"ДЕТАЛИ ПЕРЕНЕСЕНЫ С ФОТО ИЗДЕЛИЯ",1665)
+for i,(label,part) in enumerate(detail_items):
+    x=70+i*680
+    shadow(im,(x,1040,x+640,1605),30,WHITE)
+    contain(im,part,(x+28,1100,584,340))
+    d.text((x+32,1490),label,font=f(25,True),fill=DARK)
+footer_tag(d,"ДЕТАЛИ ПОКАЗАНЫ ПО ФОТО РЕАЛЬНОГО ИЗДЕЛИЯ",1665)
 save(im,6)
 
 # 7 — dimensions, explicit source data
