@@ -12,6 +12,7 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from openai import OpenAI, APIError, APIStatusError, APIConnectionError, APITimeoutError
+from catalog import router as catalog_router
 
 logger = logging.getLogger("cardai.api")
 
@@ -27,6 +28,7 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+app.include_router(catalog_router)
 
 
 def safe_project_id(project_id: str) -> str:
