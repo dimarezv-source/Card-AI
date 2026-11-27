@@ -23,7 +23,7 @@ def pill(d,xy,s,bg=O,fg=WH,n=21):
     rr(d,xy,22,bg);d.text((xy[0]+20,xy[1]+12),s,font=F(n),fill=fg)
 def prod(im,hero,box,ang=0):
     x,y,w,h=box;q=ImageOps.contain(hero,(w,h),method=Image.Resampling.LANCZOS)
-    if ang:q=q.rotate(ang,expand=True,resample=Image.Resampling.BICUBIC)
+    if ang:q=q.rotate(ang,expand=True,resample=Image.Resampling.BICUBIC,fillcolor=C)
     im.paste(q,(x+(w-q.width)//2,y+(h-q.height)//2))
 def foot(d,n,dark=False):
     col=(210,210,210) if dark else G
@@ -93,7 +93,7 @@ foot(d,3);save(im,3)
 
 # 04 / use-case editorial menu
 im=cv(C);d=ImageDraw.Draw(im);d.rectangle((0,0,1500,24),fill=O)
-pill(d,(78,75,470,140),"ОДИН ПРЕСС — РАЗНЫЕ ЗАДАЧИ")
+pill(d,(78,75,650,140),"ОДИН ПРЕСС — РАЗНЫЕ ЗАДАЧИ")
 tx(d,(75,220),"ЧТО МОЖНО\nВЫДАВИТЬ?",88,K,True,0)
 rows=[("01","ВЛАЖНЫЙ КОРМ","мягкие пакетики"),("02","ЗУБНАЯ ПАСТА","подходящие тюбики"),("03","СОУСЫ","майонез • кетчуп")]
 for i,(num,title,sub) in enumerate(rows):
