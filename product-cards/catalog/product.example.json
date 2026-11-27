@@ -1,0 +1,14 @@
+{
+  "product_name": "Название товара",
+  "sku": "SKU-001",
+  "brand": "",
+  "model": "",
+  "category": "",
+  "description": "",
+  "confirmed_attributes": {},
+  "condition": "",
+  "price": null,
+  "currency": "RUB",
+  "notes": "",
+  "status": "draft"
+}
