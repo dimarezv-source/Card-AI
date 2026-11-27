@@ -34,10 +34,31 @@ def base(kicker,title,sub=None):
     return im,d
 def paste_contain(canvas,im,box):
     x,y,w,h=box; fitted=fit(im,(w,h)); canvas.paste(fitted,(x+(w-fitted.width)//2,y+(h-fitted.height)//2))
+def paste_cover(canvas,im,box):
+    x,y,w,h=box
+    fitted=ImageOps.fit(im.convert("RGB"),(w,h),method=Image.Resampling.LANCZOS)
+    canvas.paste(fitted,(x,y))
+def get_cat(url,name):
+    p=OUT/name
+    try:
+        req=urllib.request.Request(url,headers={"User-Agent":"CardAI-infographic/1.0"})
+        with urllib.request.urlopen(req,timeout=25) as r: p.write_bytes(r.read())
+        return Image.open(p).convert("RGB")
+    except Exception as e:
+        print("Cat photo unavailable:",name,e)
+        return None
 def save(im,n): im.save(OUT/f"{n:02d}.jpg",quality=94,optimize=True)
 products=load_product()
 if not products: raise SystemExit("No product source images found")
 hero=products[0][1]
+cat1=get_cat("https://commons.wikimedia.org/wiki/Special:FilePath/Cat_eating_wet_plant-based_cat_food.jpg","cat_wet_food.jpg")
+cat2=get_cat("https://commons.wikimedia.org/wiki/Special:FilePath/Amazing_cat_eating.jpg","cat_eating.jpg")
+(OUT/"sources.txt").write_text(
+    "Товарные фотографии: исходники заказчика из product-cards/originals/tenzor/.\\n"
+    "Фото кошки 1: Jay KapLon, Cat eating wet plant-based cat food.jpg, CC BY 4.0, https://creativecommons.org/licenses/by/4.0/\\n"
+    "Фото кошки 2: Usamanadda, Amazing cat eating.jpg, CC0 1.0, https://creativecommons.org/publicdomain/zero/1.0/\\n"
+    "Кошачьи фото — иллюстрации категории; они не показывают фактическое использование данного пресса.\\n",
+    encoding="utf-8")
 # 01 hero
 im,d=base("Практичное решение","ВЫДАВИТЬ ДО\nПОСЛЕДНЕЙ КАПЛИ","Удобный помощник для извлечения содержимого из упаковок")
 rounded(d,(70,520,1430,1670),44,(250,248,245))
@@ -48,14 +69,20 @@ save(im,1)
 # 02 wet food
 im,d=base("Для заботы о питомце","ВЛАЖНЫЙ КОРМ —\nУДОБНО ДО КОНЦА","Помогает извлечь корм из мягкого пакетика")
 rounded(d,(70,520,1430,1680),44,PALE)
-paste_contain(im,hero,(110,610,1280,920))
-d.text((120,1510),"АККУРАТНОЕ ИЗВЛЕЧЕНИЕ СОДЕРЖИМОГО",font=font(31,True),fill=DARK)
+if cat1: paste_cover(im,cat1,(105,585,700,930))
+rounded(d,(845,650,1375,1430),28,WHITE)
+paste_contain(im,hero,(865,760,490,560))
+d.text((875,1370),"ПРЕСС",font=font(28,True),fill=ORANGE)
+d.text((120,1560),"СЦЕНАРИЙ ДЛЯ ВЛАЖНОГО КОРМА",font=font(29,True),fill=DARK)
 save(im,2)
 # 03 additional view / details
 im,d=base("Продуманный инструмент","ПРОСТОЙ ПРИНЦИП\nИСПОЛЬЗОВАНИЯ","Конструкция помогает выдавливать содержимое из упаковки")
 rounded(d,(70,520,1430,1680),44,(250,248,245))
-paste_contain(im,products[min(1,len(products)-1)][1],(110,590,1280,950))
-d.text((120,1510),"ПОНЯТНОЕ ПРИМЕНЕНИЕ БЕЗ СЛОЖНЫХ ДЕЙСТВИЙ",font=font(28,True),fill=DARK)
+if cat2: paste_cover(im,cat2,(105,585,700,930))
+rounded(d,(845,650,1375,1430),28,WHITE)
+paste_contain(im,products[min(1,len(products)-1)][1],(865,760,490,560))
+d.text((875,1370),"ПРЕСС",font=font(28,True),fill=ORANGE)
+d.text((120,1560),"КОГДА ПОРА ПОРАДОВАТЬ ПИТОМЦА",font=font(29,True),fill=DARK)
 save(im,3)
 # 04 toothpaste
 im,d=base("Не только для корма","ЗУБНАЯ ПАСТА","Подходит для выдавливания содержимого из тюбиков")
@@ -71,9 +98,9 @@ for i,(_,p) in enumerate(products[:3]):
     x=70+i*480; rounded(d,(x,520,x+440,1480),30,PALE); paste_contain(im,p,(x+20,580,400,820))
 d.text((100,1550),"ФОТО ИЗДЕЛИЯ ИЗ ИСХОДНЫХ МАТЕРИАЛОВ",font=font(30,True),fill=DARK); save(im,6)
 # 07 how to use
-im,d=base("Быстро и понятно","КАК ПОЛЬЗОВАТЬСЯ","Поместите край мягкой упаковки в паз и прокручивайте / перемещайте изделие по упаковке — только если это соответствует реальной конструкции и инструкции производителя.")
+im,d=base("Размеры и характеристики","ПАРАМЕТРЫ ТОВАРА","Точные значения размеров и веса перенесём из исходного фото после проверки читаемости.")
 rounded(d,(70,650,1430,1650),44,PALE); paste_contain(im,hero,(120,740,1260,760))
-d.text((120,1510),"Перед публикацией сверьте способ применения с продавцом.",font=font(25),fill=MUTED); save(im,7)
+d.text((120,1510),"НЕ ДОБАВЛЯЕМ НЕПОДТВЕРЖДЁННЫЕ ЦИФРЫ",font=font(27,True),fill=DARK); save(im,7)
 # 08 summary
 im,d=base("Для повседневных задач","УДОБНО ИЗВЛЕКАТЬ\nСОДЕРЖИМОЕ","Влажный корм • зубная паста • майонез • кетчуп")
 rounded(d,(70,540,1430,1680),44,ORANGE); paste_contain(im,hero,(120,610,1260,900))
