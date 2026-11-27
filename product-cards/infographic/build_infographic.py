@@ -82,11 +82,11 @@ cat1=fetch("https://images.pexels.com/photos/13317322/pexels-photo-13317322.jpeg
 cat2=fetch("https://images.pexels.com/photos/5822458/pexels-photo-5822458.jpeg","cat_amazing_eating.jpg")
 # Record provenance and usage limits.
 (OUT/"sources.txt").write_text(
-"Изделие: исходные фотографии заказчика из product-cards/originals/tenzor/.\\n"
-"Кошка на слайде 2: Tim Gerchmez, Domestic cat eating.jpg, общественное достояние (Public Domain), Wikimedia Commons: https://commons.wikimedia.org/wiki/File:Domestic_cat_eating.jpg\\n"
-"Кошка на слайде 3: Usamanadda, Amazing cat eating.jpg, CC0 1.0, Wikimedia Commons: https://commons.wikimedia.org/wiki/File:Amazing_cat_eating.jpg\\n"
-"Коммерческое использование фотографий кошек разрешено указанными статусами/лицензиями; при перепубликации желательно сохранять сведения об авторах и источниках.\\n"
-"Фотографии кошек — лайфстайл-иллюстрации. Они не показывают фактическое использование именно этого пресса. Пакетик на инфографике — схематичная иллюстрация без бренда.\\n",
+"Изделие: исходные фотографии заказчика из product-cards/originals/tenzor/.\n"
+"Кошка на слайде 2: Claudia Schmalz, Pexels photo 13317322, бесплатная лицензия Pexels: https://www.pexels.com/photo/close-up-shot-of-a-cat-eating-13317322/\n"
+"Кошка на слайде 3: Romina BM, Pexels photo 5822458, бесплатная лицензия Pexels: https://www.pexels.com/photo/close-up-shot-of-a-cat-5822458/\n"
+"Фотографии взяты из Pexels и опубликованы под бесплатной лицензией Pexels; актуальные условия: https://www.pexels.com/license/\n"
+"Фотографии кошек — лайфстайл-иллюстрации. Они не показывают фактическое использование именно этого пресса. Пакетик на инфографике — схематичная иллюстрация без бренда.\n",
 encoding="utf-8")
 # 1 — clean hero, restrained infographic.
 im=Image.new("RGBA",(W,H),WHITE); d=header(im,"ПРАКТИЧНЫЙ АКСЕССУАР","ИЗВЛЕКАЙТЕ\nСОДЕРЖИМОЕ УДОБНЕЕ","Для мягких упаковок и тюбиков",1)
@@ -97,24 +97,30 @@ save(im,1)
 # 2 — cat lifestyle, real product and a clear use-case cue.
 im=Image.new("RGBA",(W,H),WHITE); d=header(im,"ДЛЯ ПИТОМЦА","ВЛАЖНЫЙ КОРМ\nБЕЗ ЛИШНИХ ОСТАТКОВ","Удобный помощник при подготовке порции",2)
 shadow(im,(70,485,1430,1665),40,PALE)
-if cat1: cover(im,cat1,(105,525,770,900))
-product_card(im,hero,(910,625,430,700))
-pouch(d,620,1390,170,220)
-d.text((830,1425),"МЯГКИЙ ПАКЕТИК",font=f(24,True),fill=DARK)
-d.text((830,1470),"СХЕМАТИЧНЫЙ ПРИМЕР",font=f(18),fill=MID)
-footer_tag(d,"КОГДА ПИТОМЕЦ ЖДЁТ СВОЮ ПОРЦИЮ",1715)
+if cat1: cover(im,cat1,(105,525,1290,760))
+shadow(im,(105,1320,1395,1640),28,WHITE)
+contain(im,hero,(145,1360,820,220))
+d.text((1010,1380),"ПРЕСС ДЛЯ",font=f(25,True),fill=ORANGE)
+d.text((1010,1420),"МЯГКИХ",font=f(29,True),fill=DARK)
+d.text((1010,1460),"УПАКОВОК",font=f(29,True),fill=DARK)
+pouch(d,1110,1510,115,130)
+footer_tag(d,"ПОДГОТОВЬТЕ ПОРЦИЮ — ПОРАДОВАТЬ ПИТОМЦА",1715)
 save(im,2)
 # 3 — second cat lifestyle; use-case composition with a stronger product focal point.
-im=Image.new("RGBA",(W,H),WHITE); d=header(im,"ПОНЯТНЫЙ СЦЕНАРИЙ","СНАЧАЛА ПОРЦИЯ —\nПОТОМ УГОЩЕНИЕ","Для пакетиков с влажным кормом",3)
+im=Image.new("RGBA",(W,H),WHITE); d=header(im,"УДОБСТВО ДЛЯ ДОМА","ПОДГОТОВКА КОРМА\nБЕЗ СЛОЖНОСТЕЙ","Для подходящих мягких пакетиков",3)
 shadow(im,(70,485,1430,1665),40,LIGHT)
-if cat2: cover(im,cat2,(105,525,690,930))
-shadow(im,(850,560,1375,1510),32,WHITE)
-contain(im,hero,(880,630,465,580))
-d.text((900,1235),"ПРЕСС ДЛЯ УПАКОВОК",font=f(24,True),fill=ORANGE)
-pouch(d,935,1320,155,205)
-d.text((1120,1390),"МЯГКАЯ\nУПАКОВКА",font=f(21,True),fill=DARK,spacing=8)
-footer_tag(d,"ИЛЛЮСТРАЦИЯ СЦЕНАРИЯ ПРИМЕНЕНИЯ",1715)
+if cat2: cover(im,cat2,(105,525,650,1030))
+shadow(im,(800,560,1395,1640),32,WHITE)
+d.text((855,650),"РЕАЛЬНОЕ ИЗДЕЛИЕ",font=f(24,True),fill=ORANGE)
+contain(im,hero,(835,760,525,260))
+d.text((855,1080),"ПОМОГАЕТ ИЗВЛЕЧЬ",font=f(25,True),fill=DARK)
+d.text((855,1125),"СОДЕРЖИМОЕ ИЗ",font=f(25,True),fill=DARK)
+d.text((855,1170),"МЯГКОЙ УПАКОВКИ",font=f(25,True),fill=DARK)
+pouch(d,975,1280,145,205)
+d.text((855,1515),"Пакетик показан схематично",font=f(18),fill=MID)
+footer_tag(d,"ЛАЙФСТАЙЛ-ФОТО + РЕАЛЬНЫЙ ПРЕСС",1715)
 save(im,3)
+
 # 4 — toothpaste
 im=Image.new("RGBA",(W,H),WHITE); d=header(im,"ДЛЯ ДОМАШНИХ МЕЛОЧЕЙ","ЗУБНАЯ ПАСТА\nДО ПОСЛЕДНЕГО","Помогает выдавливать содержимое из тюбика",4)
 shadow(im,(70,500,1430,1645),40,PALE); contain(im,hero,(120,570,1260,850))
