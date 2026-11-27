@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -70,7 +69,6 @@ def main() -> None:
 
     manifest = {
         "schema_version": 1,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
         "product_count": len(products),
         "photo_count": sum(item["photo_count"] for item in products),
         "products": products,
