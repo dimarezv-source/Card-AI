@@ -6,6 +6,9 @@ ROOT=Path(__file__).resolve().parents[2]
 SRC=ROOT/"product-cards"/"originals"/"tenzor"
 OUT=ROOT/"product-cards"/"infographic"
 OUT.mkdir(parents=True,exist_ok=True)
+for stale in ("cat_domestic_eating.jpg","cat_amazing_eating.jpg","cat_wet_food.jpg","cat_eating.jpg"):
+    old=OUT/stale
+    if old.exists(): old.unlink()
 W,H=1500,2000
 ORANGE=(255,112,24); DARK=(27,29,32); MID=(91,96,102); WHITE=(255,255,255)
 PALE=(255,244,235); LIGHT=(247,247,245); LINE=(230,229,226)
