@@ -1,0 +1,69 @@
+name: Build product photo catalog
+
+on:
+  pull_request:
+    paths:
+      - "product-cards/originals/**"
+      - "product-cards/catalog/**"
+      - ".github/workflows/product-catalog.yml"
+  push:
+    branches: [main]
+    paths:
+      - "product-cards/originals/**"
+      - "product-cards/catalog/build_catalog.py"
+      - ".github/workflows/product-catalog.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: product-catalog-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate catalog builder
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check Python syntax
+        run: python -m compileall -q product-cards/catalog
+      - name: Build catalog manifest
+        run: python product-cards/catalog/build_catalog.py
+      - name: Validate generated JSON
+        run: python -c "import json; p='product-cards/catalog/index.json'; d=json.load(open(p, encoding='utf-8')); assert d['schema_version'] == 1; assert d['product_count'] == len(d['products']); assert d['photo_count'] == sum(x['photo_count'] for x in d['products']); print('Catalog manifest OK')"
+
+  publish:
+    name: Publish catalog to main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Generate catalog manifest
+        run: python product-cards/catalog/build_catalog.py
+      - name: Commit catalog if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add product-cards/catalog/index.json
+          if git diff --cached --quiet; then
+            echo "Catalog is already up to date."
+          else
+            git commit -m "Update product photo catalog"
+            git push
+          fi
