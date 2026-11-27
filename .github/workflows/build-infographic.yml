@@ -35,7 +35,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add product-cards/infographic/0[1-8].jpg product-cards/infographic/sources.txt
+          git add -A product-cards/infographic/
           if git diff --cached --quiet; then
             echo "No infographic changes."
           else
