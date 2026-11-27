@@ -98,9 +98,16 @@ for i,(_,p) in enumerate(products[:3]):
     x=70+i*480; rounded(d,(x,520,x+440,1480),30,PALE); paste_contain(im,p,(x+20,580,400,820))
 d.text((100,1550),"ФОТО ИЗДЕЛИЯ ИЗ ИСХОДНЫХ МАТЕРИАЛОВ",font=font(30,True),fill=DARK); save(im,6)
 # 07 how to use
-im,d=base("Размеры и характеристики","ПАРАМЕТРЫ ТОВАРА","Точные значения размеров и веса перенесём из исходного фото после проверки читаемости.")
-rounded(d,(70,650,1430,1650),44,PALE); paste_contain(im,hero,(120,740,1260,760))
-d.text((120,1510),"НЕ ДОБАВЛЯЕМ НЕПОДТВЕРЖДЁННЫЕ ЦИФРЫ",font=font(27,True),fill=DARK); save(im,7)
+im,d=base("Размеры и вес","КОМПАКТНЫЙ\nФОРМАТ","Параметры перенесены с исходного изображения товара.")
+rounded(d,(70,590,1430,1680),44,PALE)
+paste_contain(im,hero,(110,660,1280,520))
+specs=[("14,5 см","длина"),("3 см","высота"),("6 мм","толщина"),("13 г","вес")]
+for i,(value,label) in enumerate(specs):
+    x=100+(i%2)*680; y=1240+(i//2)*180
+    rounded(d,(x,y,x+620,y+145),24,WHITE)
+    d.text((x+28,y+18),value,font=font(48,True),fill=ORANGE)
+    d.text((x+340,y+48),label.upper(),font=font(25,True),fill=DARK)
+d.text((110,1620),"ВЫРЕЗ: 9,5 × 2 ММ",font=font(28,True),fill=DARK); save(im,7)
 # 08 summary
 im,d=base("Для повседневных задач","УДОБНО ИЗВЛЕКАТЬ\nСОДЕРЖИМОЕ","Влажный корм • зубная паста • майонез • кетчуп")
 rounded(d,(70,540,1430,1680),44,ORANGE); paste_contain(im,hero,(120,610,1260,900))
