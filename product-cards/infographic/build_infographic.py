@@ -108,7 +108,7 @@ contain(im,hero,(145,1360,820,220))
 d.text((1010,1380),"ПРЕСС ДЛЯ",font=f(25,True),fill=ORANGE)
 d.text((1010,1420),"МЯГКИХ",font=f(29,True),fill=DARK)
 d.text((1010,1460),"УПАКОВОК",font=f(29,True),fill=DARK)
-pouch(d,1110,1510,115,130)
+d.text((1010,1530),"СХЕМА МЯГКОГО ПАКЕТИКА",font=f(18,True),fill=MID)
 footer_tag(d,"ПОДГОТОВЬТЕ ПОРЦИЮ — ПОРАДОВАТЬ ПИТОМЦА",1715)
 save(im,2)
 # 3 — second cat lifestyle; use-case composition with a stronger product focal point.
@@ -141,15 +141,22 @@ for x,label in [(180,"МАЙОНЕЗ"),(790,"КЕТЧУП")]:
     rr(d,(x,1430,x+520,1555),28,WHITE,outline=LINE,width=3)
     d.text((x+40,1466),label,font=f(31,True),fill=ORANGE)
 save(im,5)
-# 6 — details / genuine source views
-im=Image.new("RGBA",(W,H),WHITE); d=header(im,"БЛИЖЕ К ДЕТАЛЯМ","ПРОСТАЯ ФОРМА.\nПОНЯТНАЯ ЗАДАЧА.","Показываем реальное изделие без изменения пропорций",6)
-for i,(_,p) in enumerate(products[:3]):
+# 6 — real product detail crops, no synthetic alternate product views.
+im=Image.new("RGBA",(W,H),WHITE); d=header(im,"БЛИЖЕ К ДЕТАЛЯМ","КОНСТРУКЦИЯ\nВ КРУПНОМ ПЛАНЕ","Показываем форму и рабочие элементы реального изделия",6)
+rgb=hero.convert("RGB")
+details=[
+    ("ОБЩИЙ ВИД",rgb.crop((35,55,1500,410))),
+    ("ПРОДОЛЬНЫЙ ПАЗ",rgb.crop((330,125,1270,330))),
+    ("ОТВЕРСТИЯ И КРАЯ",rgb.crop((1120,35,1530,420)))
+]
+for i,(label,part) in enumerate(details):
     x=70+i*480
     shadow(im,(x,510,x+440,1510),30,PALE)
-    contain(im,p,(x+20,550,400,850))
-    d.text((x+30,1430),["ОБЩИЙ ВИД","ФОРМА ИЗДЕЛИЯ","РАБОЧАЯ ЧАСТЬ"][i],font=f(22,True),fill=DARK)
-footer_tag(d,"ФОТО ИЗДЕЛИЯ ИЗ МАТЕРИАЛОВ ЗАКАЗЧИКА",1665)
+    contain(im,part,(x+18,650,404,560))
+    d.text((x+28,1370),label,font=f(22,True),fill=DARK)
+footer_tag(d,"ДЕТАЛИ ПЕРЕНЕСЕНЫ С ФОТО ИЗДЕЛИЯ",1665)
 save(im,6)
+
 # 7 — dimensions, explicit source data
 im=Image.new("RGBA",(W,H),WHITE); d=header(im,"ГАБАРИТЫ И ВЕС","КОМПАКТНЫЙ\nФОРМАТ","Размеры перенесены с исходного изображения товара",7)
 shadow(im,(70,510,1430,1710),40,PALE); contain(im,hero,(130,560,1240,540))
