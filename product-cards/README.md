@@ -14,6 +14,8 @@
 
 Описание API приёма фотографий, просмотра исходников и ведения каталога: [API.md](./API.md).
 
+**Автоматический каталог через GitHub:** загружайте фото в `originals/<SKU>/`. После попадания изменений в `main` GitHub Actions автоматически соберёт `catalog/index.json` с именами, форматами, размерами и SHA-256 исходников. Дополнительные подтверждённые поля товара можно положить в `originals/<SKU>/product.json` (образец: [product.example.json](./catalog/product.example.json)). Инструкция: [originals/README.md](./originals/README.md).
+
 ## Рабочий процесс
 
 1. Добавить исходные фотографии в `originals/`.
