@@ -1,115 +1,160 @@
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont, ImageOps
-import urllib.request, textwrap
+from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageFilter
+import urllib.request
 
 ROOT=Path(__file__).resolve().parents[2]
 SRC=ROOT/"product-cards"/"originals"/"tenzor"
 OUT=ROOT/"product-cards"/"infographic"
 OUT.mkdir(parents=True,exist_ok=True)
 W,H=1500,2000
-ORANGE=(255,112,24); DARK=(28,29,31); MUTED=(100,102,105); WHITE=(255,255,255); PALE=(255,242,230)
+ORANGE=(255,112,24); DARK=(27,29,32); MID=(91,96,102); WHITE=(255,255,255)
+PALE=(255,244,235); LIGHT=(247,247,245); LINE=(230,229,226)
 FONT="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 BOLD="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-def font(size,bold=False): return ImageFont.truetype(BOLD if bold else FONT,size)
-def rounded(draw,xy,r,fill,outline=None,width=1): draw.rounded_rectangle(xy,radius=r,fill=fill,outline=outline,width=width)
-def fit(im,box):
-    return ImageOps.contain(im.convert("RGB"),box)
-def load_product():
-    files=sorted([p for p in SRC.glob("*") if p.suffix.lower() in (".png",".jpg",".jpeg",".webp")])
-    imgs=[]
-    for p in files:
-        try:
-            im=Image.open(p).convert("RGBA")
-            if im.width>100 and im.height>100: imgs.append((p,im))
-        except Exception: pass
-    return imgs
-def base(kicker,title,sub=None):
-    im=Image.new("RGB",(W,H),WHITE); d=ImageDraw.Draw(im)
-    d.rectangle((0,0,W,28),fill=ORANGE)
-    d.text((90,78),kicker.upper(),font=font(30,True),fill=ORANGE)
-    d.multiline_text((90,145),title,font=font(76,True),fill=DARK,spacing=12)
-    if sub: d.multiline_text((95,360),sub,font=font(34),fill=MUTED,spacing=10)
-    d.rounded_rectangle((90,H-125,360,H-105),radius=10,fill=ORANGE)
-    d.text((W-330,H-145),"ПРЕСС ДЛЯ УПАКОВОК",font=font(22,True),fill=MUTED)
-    return im,d
-def paste_contain(canvas,im,box):
-    x,y,w,h=box; fitted=fit(im,(w,h)); canvas.paste(fitted,(x+(w-fitted.width)//2,y+(h-fitted.height)//2))
-def paste_cover(canvas,im,box):
+def f(sz,b=False): return ImageFont.truetype(BOLD if b else FONT,sz)
+def rr(d,xy,r,fill,outline=None,width=1): d.rounded_rectangle(xy,radius=r,fill=fill,outline=outline,width=width)
+def shadow(canvas,xy,r=36,fill=WHITE):
+    x1,y1,x2,y2=xy
+    layer=Image.new("RGBA",canvas.size,(0,0,0,0)); ld=ImageDraw.Draw(layer)
+    ld.rounded_rectangle((x1+8,y1+14,x2+8,y2+14),radius=r,fill=(20,20,20,35))
+    layer=layer.filter(ImageFilter.GaussianBlur(18)); canvas.alpha_composite(layer)
+    ImageDraw.Draw(canvas).rounded_rectangle(xy,radius=r,fill=fill)
+def contain(canvas,im,box):
     x,y,w,h=box
-    fitted=ImageOps.fit(im.convert("RGB"),(w,h),method=Image.Resampling.LANCZOS)
-    canvas.paste(fitted,(x,y))
-def get_cat(url,name):
+    if im is None: return
+    q=ImageOps.contain(im.convert("RGB"),(w,h),method=Image.Resampling.LANCZOS)
+    canvas.paste(q,(x+(w-q.width)//2,y+(h-q.height)//2))
+def cover(canvas,im,box):
+    if im is None: return
+    x,y,w,h=box
+    q=ImageOps.fit(im.convert("RGB"),(w,h),method=Image.Resampling.LANCZOS)
+    canvas.paste(q,(x,y))
+def load_product():
+    out=[]
+    for p in sorted(SRC.glob("*")):
+        if p.suffix.lower() not in (".png",".jpg",".jpeg",".webp"): continue
+        try:
+            q=Image.open(p).convert("RGBA")
+            if q.width>100 and q.height>100: out.append((p,q))
+        except Exception: pass
+    return out
+def fetch(url,name):
     p=OUT/name
     try:
         req=urllib.request.Request(url,headers={"User-Agent":"CardAI-infographic/1.0"})
-        with urllib.request.urlopen(req,timeout=25) as r: p.write_bytes(r.read())
+        with urllib.request.urlopen(req,timeout=30) as r: p.write_bytes(r.read())
         return Image.open(p).convert("RGB")
     except Exception as e:
-        print("Cat photo unavailable:",name,e)
+        print("External image unavailable",name,e)
         return None
-def save(im,n): im.save(OUT/f"{n:02d}.jpg",quality=94,optimize=True)
+def header(im,kicker,title,sub=None,num=None):
+    d=ImageDraw.Draw(im)
+    d.rectangle((0,0,W,22),fill=ORANGE)
+    d.text((92,76),kicker.upper(),font=f(27,True),fill=ORANGE)
+    d.multiline_text((88,130),title,font=f(76,True),fill=DARK,spacing=8)
+    if sub: d.multiline_text((94,330),sub,font=f(31),fill=MID,spacing=9)
+    d.line((92,430,1408,430),fill=LINE,width=2)
+    d.text((92,1900),"ПРЕСС ДЛЯ МЯГКИХ УПАКОВОК",font=f(21,True),fill=MID)
+    if num: d.text((1350,1898),f"{num:02d}/08",font=f(22,True),fill=ORANGE)
+    return d
+def footer_tag(d,text,y=1770):
+    rr(d,(92,y,1408,y+78),22,DARK)
+    d.text((126,y+21),text,font=f(26,True),fill=WHITE)
+def pouch(d,x,y,w=190,h=260):
+    # Neutral illustrative soft pouch; deliberately unbranded.
+    pts=[(x+18,y),(x+w-18,y),(x+w-5,y+h-25),(x+w//2,y+h),(x+5,y+h-25)]
+    d.polygon(pts,fill=(244,238,226),outline=(194,180,158))
+    d.line((x+22,y+34,x+w-22,y+34),fill=(194,180,158),width=5)
+    d.rounded_rectangle((x+34,y+72,x+w-34,y+172),radius=18,fill=(255,255,255),outline=(225,215,200),width=3)
+    d.text((x+48,y+105),"КОРМ",font=f(22,True),fill=(117,104,89))
+    d.ellipse((x+w//2-13,y+h-20,x+w//2+13,y+h+6),fill=(172,104,61))
+def product_card(im,hero,box,label="РЕАЛЬНЫЙ ВИД ИЗДЕЛИЯ"):
+    x,y,w,h=box
+    shadow(im,(x,y,x+w,y+h),30,WHITE)
+    contain(im,hero,(x+22,y+22,w-44,h-105))
+    d=ImageDraw.Draw(im); d.text((x+28,y+h-64),label,font=f(20,True),fill=ORANGE)
+def save(im,n):
+    im.convert("RGB").save(OUT/f"{n:02d}.jpg",quality=95,optimize=True)
 products=load_product()
 if not products: raise SystemExit("No product source images found")
 hero=products[0][1]
-cat1=get_cat("https://commons.wikimedia.org/wiki/Special:FilePath/Cat_eating_wet_plant-based_cat_food.jpg","cat_wet_food.jpg")
-cat2=get_cat("https://commons.wikimedia.org/wiki/Special:FilePath/Amazing_cat_eating.jpg","cat_eating.jpg")
+cat1=fetch("https://commons.wikimedia.org/wiki/Special:FilePath/Domestic_cat_eating.jpg","cat_domestic_eating.jpg")
+cat2=fetch("https://commons.wikimedia.org/wiki/Special:FilePath/Amazing_cat_eating.jpg","cat_amazing_eating.jpg")
+# Record provenance and usage limits.
 (OUT/"sources.txt").write_text(
-    "Товарные фотографии: исходники заказчика из product-cards/originals/tenzor/.\\n"
-    "Фото кошки 1: Jay KapLon, Cat eating wet plant-based cat food.jpg, CC BY 4.0, https://creativecommons.org/licenses/by/4.0/\\n"
-    "Фото кошки 2: Usamanadda, Amazing cat eating.jpg, CC0 1.0, https://creativecommons.org/publicdomain/zero/1.0/\\n"
-    "Кошачьи фото — иллюстрации категории; они не показывают фактическое использование данного пресса.\\n",
-    encoding="utf-8")
-# 01 hero
-im,d=base("Практичное решение","ВЫДАВИТЬ ДО\nПОСЛЕДНЕЙ КАПЛИ","Удобный помощник для извлечения содержимого из упаковок")
-rounded(d,(70,520,1430,1670),44,(250,248,245))
-paste_contain(im,hero,(110,590,1280,950))
-rounded(d,(100,1510,1400,1640),28,ORANGE)
-d.text((155,1548),"МЕНЬШЕ ОСТАТКОВ ВНУТРИ УПАКОВКИ",font=font(34,True),fill=WHITE)
+"Изделие: исходные фотографии заказчика из product-cards/originals/tenzor/.\\n"
+"Кошка на слайде 2: Tim Gerchmez, Domestic cat eating.jpg, общественное достояние (Public Domain), Wikimedia Commons: https://commons.wikimedia.org/wiki/File:Domestic_cat_eating.jpg\\n"
+"Кошка на слайде 3: Usamanadda, Amazing cat eating.jpg, CC0 1.0, Wikimedia Commons: https://commons.wikimedia.org/wiki/File:Amazing_cat_eating.jpg\\n"
+"Коммерческое использование фотографий кошек разрешено указанными статусами/лицензиями; при перепубликации желательно сохранять сведения об авторах и источниках.\\n"
+"Фотографии кошек — лайфстайл-иллюстрации. Они не показывают фактическое использование именно этого пресса. Пакетик на инфографике — схематичная иллюстрация без бренда.\\n",
+encoding="utf-8")
+# 1 — clean hero, restrained infographic.
+im=Image.new("RGBA",(W,H),WHITE); d=header(im,"ПРАКТИЧНЫЙ АКСЕССУАР","ИЗВЛЕКАЙТЕ\nСОДЕРЖИМОЕ УДОБНЕЕ","Для мягких упаковок и тюбиков",1)
+shadow(im,(70,500,1430,1640),42,LIGHT); contain(im,hero,(115,555,1270,920))
+rr(d,(105,1490,1395,1610),28,ORANGE)
+d.text((155,1527),"ПОМОГАЕТ СОБРАТЬ ОСТАТКИ ИЗ УПАКОВКИ",font=f(31,True),fill=WHITE)
 save(im,1)
-# 02 wet food
-im,d=base("Для заботы о питомце","ВЛАЖНЫЙ КОРМ —\nУДОБНО ДО КОНЦА","Помогает извлечь корм из мягкого пакетика")
-rounded(d,(70,520,1430,1680),44,PALE)
-if cat1: paste_cover(im,cat1,(105,585,700,930))
-rounded(d,(845,650,1375,1430),28,WHITE)
-paste_contain(im,hero,(865,760,490,560))
-d.text((875,1370),"ПРЕСС",font=font(28,True),fill=ORANGE)
-d.text((120,1560),"СЦЕНАРИЙ ДЛЯ ВЛАЖНОГО КОРМА",font=font(29,True),fill=DARK)
+# 2 — cat lifestyle, real product and a clear use-case cue.
+im=Image.new("RGBA",(W,H),WHITE); d=header(im,"ДЛЯ ПИТОМЦА","ВЛАЖНЫЙ КОРМ\nБЕЗ ЛИШНИХ ОСТАТКОВ","Удобный помощник при подготовке порции",2)
+shadow(im,(70,485,1430,1665),40,PALE)
+if cat1: cover(im,cat1,(105,525,770,900))
+product_card(im,hero,(910,625,430,700))
+pouch(d,620,1390,170,220)
+d.text((830,1425),"МЯГКИЙ ПАКЕТИК",font=f(24,True),fill=DARK)
+d.text((830,1470),"СХЕМАТИЧНЫЙ ПРИМЕР",font=f(18),fill=MID)
+footer_tag(d,"КОГДА ПИТОМЕЦ ЖДЁТ СВОЮ ПОРЦИЮ",1715)
 save(im,2)
-# 03 additional view / details
-im,d=base("Продуманный инструмент","ПРОСТОЙ ПРИНЦИП\nИСПОЛЬЗОВАНИЯ","Конструкция помогает выдавливать содержимое из упаковки")
-rounded(d,(70,520,1430,1680),44,(250,248,245))
-if cat2: paste_cover(im,cat2,(105,585,700,930))
-rounded(d,(845,650,1375,1430),28,WHITE)
-paste_contain(im,products[min(1,len(products)-1)][1],(865,760,490,560))
-d.text((875,1370),"ПРЕСС",font=font(28,True),fill=ORANGE)
-d.text((120,1560),"КОГДА ПОРА ПОРАДОВАТЬ ПИТОМЦА",font=font(29,True),fill=DARK)
+# 3 — second cat lifestyle; use-case composition with a stronger product focal point.
+im=Image.new("RGBA",(W,H),WHITE); d=header(im,"ПОНЯТНЫЙ СЦЕНАРИЙ","СНАЧАЛА ПОРЦИЯ —\nПОТОМ УГОЩЕНИЕ","Для пакетиков с влажным кормом",3)
+shadow(im,(70,485,1430,1665),40,LIGHT)
+if cat2: cover(im,cat2,(105,525,690,930))
+shadow(im,(850,560,1375,1510),32,WHITE)
+contain(im,hero,(880,630,465,580))
+d.text((900,1235),"ПРЕСС ДЛЯ УПАКОВОК",font=f(24,True),fill=ORANGE)
+pouch(d,935,1320,155,205)
+d.text((1120,1390),"МЯГКАЯ\nУПАКОВКА",font=f(21,True),fill=DARK,spacing=8)
+footer_tag(d,"ИЛЛЮСТРАЦИЯ СЦЕНАРИЯ ПРИМЕНЕНИЯ",1715)
 save(im,3)
-# 04 toothpaste
-im,d=base("Не только для корма","ЗУБНАЯ ПАСТА","Подходит для выдавливания содержимого из тюбиков")
-rounded(d,(70,520,1430,1680),44,PALE); paste_contain(im,hero,(120,610,1260,900))
-d.text((120,1500),"ДОСТУП К ОСТАТКАМ ВНУТРИ ТЮБИКА",font=font(30,True),fill=DARK); save(im,4)
-# 05 sauces
-im,d=base("Универсальный помощник","МАЙОНЕЗ • КЕТЧУП","Можно использовать с подходящими мягкими упаковками")
-rounded(d,(70,520,1430,1680),44,(250,248,245)); paste_contain(im,products[-1][1] if len(products)>1 else hero,(120,610,1260,900))
-d.text((120,1500),"ОДИН ИНСТРУМЕНТ — РАЗНЫЕ СЦЕНАРИИ",font=font(30,True),fill=DARK); save(im,5)
-# 06 product views
-im,d=base("Внимание к деталям","КОНСТРУКЦИЯ\nВ КРУПНОМ ПЛАНЕ","Реальная форма изделия — без изменения пропорций")
+# 4 — toothpaste
+im=Image.new("RGBA",(W,H),WHITE); d=header(im,"ДЛЯ ДОМАШНИХ МЕЛОЧЕЙ","ЗУБНАЯ ПАСТА\nДО ПОСЛЕДНЕГО","Помогает выдавливать содержимое из тюбика",4)
+shadow(im,(70,500,1430,1645),40,PALE); contain(im,hero,(120,570,1260,850))
+# illustrative tube
+rr(d,(210,1370,1260,1510),34,WHITE,outline=(224,214,202),width=3)
+d.text((270,1412),"ТЮБИК",font=f(32,True),fill=MID)
+d.text((900,1412),"АККУРАТНЕЕ ИСПОЛЬЗОВАТЬ ОСТАТКИ",font=f(25,True),fill=ORANGE)
+save(im,4)
+# 5 — sauces
+im=Image.new("RGBA",(W,H),WHITE); d=header(im,"ЕЩЁ ОДИН СЦЕНАРИЙ","МАЙОНЕЗ И КЕТЧУП","Для подходящих мягких упаковок",5)
+shadow(im,(70,500,1430,1645),40,LIGHT); contain(im,products[-1][1] if len(products)>1 else hero,(120,560,1260,880))
+for x,label in [(180,"МАЙОНЕЗ"),(790,"КЕТЧУП")]:
+    rr(d,(x,1430,x+520,1555),28,WHITE,outline=LINE,width=3)
+    d.text((x+40,1466),label,font=f(31,True),fill=ORANGE)
+save(im,5)
+# 6 — details / genuine source views
+im=Image.new("RGBA",(W,H),WHITE); d=header(im,"БЛИЖЕ К ДЕТАЛЯМ","ПРОСТАЯ ФОРМА.\nПОНЯТНАЯ ЗАДАЧА.","Показываем реальное изделие без изменения пропорций",6)
 for i,(_,p) in enumerate(products[:3]):
-    x=70+i*480; rounded(d,(x,520,x+440,1480),30,PALE); paste_contain(im,p,(x+20,580,400,820))
-d.text((100,1550),"ФОТО ИЗДЕЛИЯ ИЗ ИСХОДНЫХ МАТЕРИАЛОВ",font=font(30,True),fill=DARK); save(im,6)
-# 07 how to use
-im,d=base("Размеры и вес","КОМПАКТНЫЙ\nФОРМАТ","Параметры перенесены с исходного изображения товара.")
-rounded(d,(70,590,1430,1680),44,PALE)
-paste_contain(im,hero,(110,660,1280,520))
+    x=70+i*480
+    shadow(im,(x,510,x+440,1510),30,PALE)
+    contain(im,p,(x+20,550,400,850))
+    d.text((x+30,1430),["ОБЩИЙ ВИД","ФОРМА ИЗДЕЛИЯ","РАБОЧАЯ ЧАСТЬ"][i],font=f(22,True),fill=DARK)
+footer_tag(d,"ФОТО ИЗДЕЛИЯ ИЗ МАТЕРИАЛОВ ЗАКАЗЧИКА",1665)
+save(im,6)
+# 7 — dimensions, explicit source data
+im=Image.new("RGBA",(W,H),WHITE); d=header(im,"ГАБАРИТЫ И ВЕС","КОМПАКТНЫЙ\nФОРМАТ","Размеры перенесены с исходного изображения товара",7)
+shadow(im,(70,510,1430,1710),40,PALE); contain(im,hero,(130,560,1240,540))
 specs=[("14,5 см","длина"),("3 см","высота"),("6 мм","толщина"),("13 г","вес")]
-for i,(value,label) in enumerate(specs):
-    x=100+(i%2)*680; y=1240+(i//2)*180
-    rounded(d,(x,y,x+620,y+145),24,WHITE)
-    d.text((x+28,y+18),value,font=font(48,True),fill=ORANGE)
-    d.text((x+340,y+48),label.upper(),font=font(25,True),fill=DARK)
-d.text((110,1620),"ВЫРЕЗ: 9,5 × 2 ММ",font=font(28,True),fill=DARK); save(im,7)
-# 08 summary
-im,d=base("Для повседневных задач","УДОБНО ИЗВЛЕКАТЬ\nСОДЕРЖИМОЕ","Влажный корм • зубная паста • майонез • кетчуп")
-rounded(d,(70,540,1430,1680),44,ORANGE); paste_contain(im,hero,(120,610,1260,900))
-d.text((130,1510),"ПРАКТИЧНЫЙ АКСЕССУАР ДЛЯ ДОМА",font=font(34,True),fill=WHITE); save(im,8)
+for i,(v,l) in enumerate(specs):
+    x=105+(i%2)*680; y=1160+(i//2)*205
+    rr(d,(x,y,x+610,y+160),26,WHITE,outline=LINE,width=2)
+    d.text((x+32,y+22),v,font=f(50,True),fill=ORANGE)
+    d.text((x+340,y+61),l.upper(),font=f(25,True),fill=DARK)
+d.text((125,1600),"ВЫРЕЗ: 9,5 × 2 ММ",font=f(28,True),fill=DARK)
+save(im,7)
+# 8 — concise final benefit panel
+im=Image.new("RGBA",(W,H),WHITE); d=header(im,"ОДИН АКСЕССУАР — РАЗНЫЕ ЗАДАЧИ","УДОБНО В БЫТУ","Влажный корм • паста • майонез • кетчуп",8)
+rr(d,(70,500,1430,1660),44,ORANGE)
+contain(im,hero,(135,570,1230,800))
+d.text((150,1440),"ДЛЯ МЯГКИХ УПАКОВОК И ТЮБИКОВ",font=f(36,True),fill=WHITE)
+d.text((150,1510),"Компактный размер • небольшой вес",font=f(28),fill=WHITE)
+save(im,8)
 print(f"Generated {len(list(OUT.glob('*.jpg')))} slides in {OUT}")
