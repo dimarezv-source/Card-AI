@@ -7,6 +7,9 @@ on:
       - "product-cards/infographic/build_infographic.py"
       - ".github/workflows/build-infographic.yml"
   workflow_dispatch:
+concurrency:
+  group: ozon-infographic-${{ github.ref }}
+  cancel-in-progress: false
 permissions:
   contents: write
   actions: read
