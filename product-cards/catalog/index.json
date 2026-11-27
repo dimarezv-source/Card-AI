@@ -1,46 +1,52 @@
 {
   "schema_version": 1,
-  "product_count": 1,
+  "product_count": 2,
   "photo_count": 5,
   "products": [
     {
-      "product_id": "_unassigned",
-      "photo_count": 5,
+      "product_id": "tenzor",
+      "photo_count": 4,
       "photos": [
         {
-          "file_name": "20261127_152256.jpg",
-          "path": "originals/20261127_152256.jpg",
-          "format": "jpg",
-          "size_bytes": 1576316,
-          "sha256": "7be81bb0a7451f9dc4417239a636ae8200733c44657875cf6e23cbf607b8c811"
-        },
-        {
           "file_name": "tenzor-32ef118c-174b-44e1-bf7c-723b68115a8a.png",
-          "path": "originals/tenzor-32ef118c-174b-44e1-bf7c-723b68115a8a.png",
+          "path": "originals/tenzor/tenzor-32ef118c-174b-44e1-bf7c-723b68115a8a.png",
           "format": "png",
           "size_bytes": 710826,
           "sha256": "4f728e481fcfd13fb0efa3055b948acbf8987b97e6d36f613efbb8ffd29e6884"
         },
         {
           "file_name": "tenzor-4fa71751-ff61-4c92-903d-47d7d39fd8ba.png",
-          "path": "originals/tenzor-4fa71751-ff61-4c92-903d-47d7d39fd8ba.png",
+          "path": "originals/tenzor/tenzor-4fa71751-ff61-4c92-903d-47d7d39fd8ba.png",
           "format": "png",
           "size_bytes": 1748153,
           "sha256": "a23d6136eed3a02356100d843395df0ac8c0a3958429456f6ab4281d642c4ea6"
         },
         {
           "file_name": "tenzor-7e1da8b0-ccfa-4c64-aa0c-2b430e04a988.png",
-          "path": "originals/tenzor-7e1da8b0-ccfa-4c64-aa0c-2b430e04a988.png",
+          "path": "originals/tenzor/tenzor-7e1da8b0-ccfa-4c64-aa0c-2b430e04a988.png",
           "format": "png",
           "size_bytes": 2580716,
           "sha256": "215ac1dce984f65f5d107589e9583f9ea29a80a3766b27d2242229e295d24a02"
         },
         {
           "file_name": "tenzor-c3a73089-afc9-485e-95c8-da721e49cd61.png",
-          "path": "originals/tenzor-c3a73089-afc9-485e-95c8-da721e49cd61.png",
+          "path": "originals/tenzor/tenzor-c3a73089-afc9-485e-95c8-da721e49cd61.png",
           "format": "png",
           "size_bytes": 2436279,
           "sha256": "7f5befd59ea982d371da977a919766c3fc6cf69b2cad09eba3c13bf953450e90"
+        }
+      ]
+    },
+    {
+      "product_id": "unclassified-20261127",
+      "photo_count": 1,
+      "photos": [
+        {
+          "file_name": "20261127_152256.jpg",
+          "path": "originals/unclassified-20261127/20261127_152256.jpg",
+          "format": "jpg",
+          "size_bytes": 1576316,
+          "sha256": "7be81bb0a7451f9dc4417239a636ae8200733c44657875cf6e23cbf607b8c811"
         }
       ]
     }
