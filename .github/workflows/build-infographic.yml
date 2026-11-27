@@ -1,0 +1,50 @@
+name: Build Ozon product infographic
+on:
+  push:
+    branches: [main]
+    paths:
+      - "product-cards/originals/tenzor/**"
+      - "product-cards/infographic/build_infographic.py"
+      - ".github/workflows/build-infographic.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install image tools and fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-dejavu-core
+          python -m pip install --upgrade pip
+          pip install Pillow
+      - name: Build eight Ozon slides
+        run: python product-cards/infographic/build_infographic.py
+      - name: Save slides in repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add product-cards/infographic/*.jpg product-cards/infographic/sources.txt
+          if git diff --cached --quiet; then
+            echo "No infographic changes."
+          else
+            git commit -m "Generate Ozon infographic slides from source photos"
+            git push
+          fi
+      - name: Upload downloadable pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: card-ai-ozon-infographic
+          path: |
+            product-cards/infographic/*.jpg
+            product-cards/infographic/sources.txt
+          if-no-files-found: error
+          retention-days: 30
