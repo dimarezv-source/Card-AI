@@ -39,7 +39,9 @@ def load_product():
         except Exception: pass
     return out
 def fetch(url,name):
-    p=OUT/name
+    asset_dir=OUT/"assets"
+    asset_dir.mkdir(parents=True,exist_ok=True)
+    p=asset_dir/name
     try:
         req=urllib.request.Request(url,headers={"User-Agent":"CardAI-infographic/1.0"})
         with urllib.request.urlopen(req,timeout=30) as r: p.write_bytes(r.read())
