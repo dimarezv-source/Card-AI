@@ -37,6 +37,7 @@ jobs:
             echo "No infographic changes."
           else
             git commit -m "Generate Ozon infographic slides from source photos"
+            git pull --rebase origin main
             git push
           fi
       - name: Upload downloadable pack
