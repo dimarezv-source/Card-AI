@@ -78,8 +78,8 @@ def save(im,n):
 products=load_product()
 if not products: raise SystemExit("No product source images found")
 hero=products[0][1]
-cat1=fetch("https://commons.wikimedia.org/wiki/Special:FilePath/Domestic_cat_eating.jpg","cat_domestic_eating.jpg")
-cat2=fetch("https://commons.wikimedia.org/wiki/Special:FilePath/Amazing_cat_eating.jpg","cat_amazing_eating.jpg")
+cat1=fetch("https://images.pexels.com/photos/13317322/pexels-photo-13317322.jpeg","cat_domestic_eating.jpg")
+cat2=fetch("https://images.pexels.com/photos/5822458/pexels-photo-5822458.jpeg","cat_amazing_eating.jpg")
 # Record provenance and usage limits.
 (OUT/"sources.txt").write_text(
 "Изделие: исходные фотографии заказчика из product-cards/originals/tenzor/.\\n"
